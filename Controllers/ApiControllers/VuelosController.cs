@@ -2,80 +2,88 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 [Route("api/vuelos")]
-public class VuelosController : Controller{
+public class VuelosContoller : ControllerBase {
 
     [HttpGet("ciudades-origen")]
-    public IActionResult CiudadesOrigen(){
-        var client = new MongoClient(CadenasConexion.MONGO_DB);
+    public IActionResult CiudadesOrigen(){ 
+        var client = new MongoClient (CadenasConexion.MONGO_DB);
         var db = client.GetDatabase("Aeropuerto");
-        var collection = db.GetCollection<Vuelos>("Vuelos");
+        var collection = db.GetCollection<Vuelo>("Vuelos");
 
-        var lista = collection.Distinct<string>("CiudadOrigen", FilterDefinition<Vuelos>.Empty).ToList();
+        var lista = collection.Distinct<string>("CiudadOrigen", FilterDefinition<Vuelo>.Empty).ToList();
+
         return Ok(lista);
     }
 
-     [HttpGet("ciudad-destino")]
-    public IActionResult CiudadDestino(){
-        var client = new MongoClient(CadenasConexion.MONGO_DB);
+     [HttpGet("ciudades-destino")]
+    public IActionResult CiudadesDestino(){ 
+        var client = new MongoClient (CadenasConexion.MONGO_DB);
         var db = client.GetDatabase("Aeropuerto");
-        var collection = db.GetCollection<Vuelos>("Vuelos");
+        var collection = db.GetCollection<Vuelo>("Vuelos");
 
-        var lista = collection.Distinct<string>("CiudadDestino", FilterDefinition<Vuelos>.Empty).ToList();
-        return Ok(lista);
-    }
- [HttpGet("estatus")]
-    public IActionResult ListarEstatus(){
-        var client = new MongoClient(CadenasConexion.MONGO_DB);
-        var db = client.GetDatabase("Aeropuerto");
-        var collection = db.GetCollection<Vuelos>("Vuelos");
+        var lista = collection.Distinct<string>("CiudadDestino", FilterDefinition<Vuelo>.Empty).ToList();
 
-        var lista = collection.Distinct<string>("EstatusVuelo", FilterDefinition<Vuelos>.Empty).ToList();
         return Ok(lista);
     }
 
-    [HttpGet("listar-vuelos")]
-    public IActionResult  ListarVuelos(string? estatus, string? origen, string? destino, string? fechainicial, string? fechafinal){
-        var client = new MongoClient(CadenasConexion.MONGO_DB);
+     [HttpGet("estatus")]
+    public IActionResult ListarEstatus(){ 
+        var client = new MongoClient (CadenasConexion.MONGO_DB);
         var db = client.GetDatabase("Aeropuerto");
-        var collection = db.GetCollection<Vuelos>("Vuelos");
+        var collection = db.GetCollection<Vuelo>("Vuelos");
 
-        List<FilterDefinition<Vuelos>> filters = new List<FilterDefinition<Vuelos>>();
+        var lista = collection.Distinct<string>("EstatusVuelo", FilterDefinition<Vuelo>.Empty).ToList();
+
+        return Ok(lista);
+    }
+
+     [HttpGet("listar-vuelos")]
+    public IActionResult ListarVuelos(string? estatus, string? origen, string? destino,
+     string? fechaInicial, string? fechaFinal){ 
+        var client = new MongoClient (CadenasConexion.MONGO_DB);
+        var db = client.GetDatabase("Aeropuerto");
+        var collection = db.GetCollection<Vuelo>("Vuelos");
+
+        List<FilterDefinition<Vuelo>> filters = new List<FilterDefinition<Vuelo>>();
 
         if(!string.IsNullOrWhiteSpace(estatus)){
-            var filterEstatus = Builders<Vuelos>.Filter.Eq(x => x.EstatusVuelo, estatus);
-            filters.Add(filterEstatus);
+        var filterEstatus = Builders<Vuelo>.Filter.Eq(x => x.EstatusVuelo, estatus);
+        filters.Add(filterEstatus);
         }
 
-        if(!string.IsNullOrWhiteSpace(origen)){
-            var filterOrigen = Builders<Vuelos>.Filter.Eq(x => x.CiudadOrigen, origen);
-            filters.Add(filterOrigen);
+         if(!string.IsNullOrWhiteSpace(origen)){
+        var filterOrigen = Builders<Vuelo>.Filter.Eq(x => x.CiudadOrigen, origen);
+        filters.Add(filterOrigen);
         }
 
         if(!string.IsNullOrWhiteSpace(destino)){
-            var filterDestino = Builders<Vuelos>.Filter.Eq(x => x.CiudadDestino, destino);
-            filters.Add(filterDestino);
+        var filterDestino = Builders<Vuelo>.Filter.Eq(x => x.CiudadDestino, destino);
+        filters.Add(filterDestino);
         }
 
-        if(!string.IsNullOrWhiteSpace(fechainicial)){
-            if(DateTime.TryParse(fechainicial, out DateTime fecha)){
-            var filtrofechaIni = Builders<Vuelos>.Filter.Gte(x => x.FechaHoraSalida, fecha);
-            filters.Add(filtrofechaIni);
-        }
-
-        }
-        if(!string.IsNullOrWhiteSpace(fechafinal)){
-            if(DateTime.TryParse(fechafinal,out DateTime fecha )){
-           var filtroFechaFIni= Builders<Vuelos>.Filter.Lte(x => x.FechaHoraSalida, fecha);
-            filters.Add(filtroFechaFIni);
+        if (!string.IsNullOrWhiteSpace(fechaInicial)){
+         if(DateTime.TryParse(fechaInicial, out DateTime fecha)){
+          var filtroFechaIni = Builders<Vuelo>.Filter.Gte(x => x.FechaHoraSalida, fecha);
+          filters.Add(filtroFechaIni);
          }
         }
-        List<Vuelos> vuelos;
-        if(filters.Count > 0) {
-          var filter = Builders<Vuelos>.Filter.And(filters);
-          vuelos = collection.Find(filter).ToList();
+
+        if (!string.IsNullOrWhiteSpace(fechaFinal)){
+         if(DateTime.TryParse(fechaFinal, out DateTime fecha)){
+          var filtroFechaFin = Builders<Vuelo>.Filter.Lte(x => x.FechaHoraSalida, 
+          new DateTime(fecha.Year, fecha.Month, fecha.Day, 23, 59, 59));
+          filters.Add(filtroFechaFin);
+         }
         }
-        else {
-            vuelos = collection.Find(FilterDefinition<Vuelos>.Empty).ToList();
+
+        List<Vuelo> vuelos;
+        if (filters.Count > 0) {
+         var filter = Builders<Vuelo>.Filter.And(filters);
+         vuelos = collection.Find(filter).ToList();
+        }
+
+        else{
+            vuelos = collection.Find(FilterDefinition<Vuelo>.Empty).ToList();
         }
         return Ok(vuelos);
     }

@@ -1,145 +1,189 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import ListadoVuelos from "./ListadoVuelos";
 
 type Ciudad = {
-  Nombre: string
-}
-type EstatusVuelo ={
-  Nombre: string
+    Nombre: string
 }
 
-type Vuelo = {
-  PaisOrigen: string,
-  CiudadOrigen: string,
-  AeropuertoOrigen: string,
-  PaisDestino: string,
-  CiudadDestino:string,
-  AeropuertoDestino: string,
-  PasajerosActuales: number,
-  NombrePiloto: string,
-  FechaHoraSalida: string,
-  FechaHoraLllegadaAproximada: String
+type EstatusVuelo = {
+    Nombre: string
+}
+
+ export type Vuelo = {
+    PaisOrigen: string,
+    CiudadOrigen: string,
+    AeropuertoOrigen: string,
+    PaisDestino: string,
+    CiudadDestino: string,
+    AeropuertoDestino: string,
+    PasajerosActuales: number,
+    NombrePiloto: string,
+    FechaHoraSalida: string,
+    FechaHoraLlegadaAproximada: string,
+    EstatusVuelo: string
 }
 
 const BuscadorVuelos = () => {
-  const [ciudadesOrigen, setCiudadesOrigen] = useState<Ciudad[]>([]);
-  const [ciudadesDestino,setCiudadesDestino]= useState<Ciudad[]>([]);
-  const [ListaEstatus, setListaEstatus]= useState<EstatusVuelo[]>([]);
+    const [ciudadesOrigen, setCiudadesOrigen] = useState<Ciudad[]>();
+    const [ciudadesDestino, setCiudadesDestino] = useState<Ciudad[]>();
+    const [listaEstatus, setListaEstatus] = useState<EstatusVuelo[]>([]);
+    const [listaVuelos, setListaVuelos] = useState<Vuelo[]>([]);
 
-  const listarCiudadesOrigen = async () => {
-    const response = await fetch("http://localhost:5000/api/vuelos/ciudades-origen");
-    if(response.ok) {
-      const arr = await response.json();
-      let ciudades : Array<Ciudad> = [];
+    const [fechaInicial, setFechaInicial] = useState("");
+    const [fechaFinal, setFechaFinal] = useState("");
+    const [estatus, setEstatus] = useState("");
+    const [origen, setOrigen] = useState("");
+    const [destino, setDestino] = useState("");
 
-      arr.map((x: string) => ciudades.push({Nombre: x}));
+    const listarCiudadesOrigen = async () => {
+        const response = await fetch("http://localhost:5000/api/vuelos/ciudades-origen");
+        if(response.ok) {
+            const arr = await response.json();
+            let ciudades : Array<Ciudad> = [];
 
-     setCiudadesOrigen(ciudades);
+            arr.map((x: string) => ciudades.push({Nombre: x}));
+
+            setCiudadesOrigen(ciudades);
+        }
     }
-  }
-  const listarCiudadesDestino= async () => {
-    const response = await fetch("http://localhost:5000/api/vuelos/ciudad-destino");
-    if(response.ok) {
-      const arr = await response.json();
-      let ciudades : Array<Ciudad> = [];
 
-      arr.map((x: string) => ciudades.push({Nombre: x}));
+     const listarCiudadesDestino = async () => {
+        const response = await fetch("http://localhost:5000/api/vuelos/ciudades-destino");
+        if(response.ok) {
+            const arr = await response.json();
+            let ciudades : Array<Ciudad> = [];
 
-     setCiudadesDestino(ciudades);
+            arr.map((x: string) => ciudades.push({Nombre: x}));
+
+            setCiudadesDestino(ciudades);
+        }
     }
-  }
-  const listarEstatus= async () => {
-    const response = await fetch("http://localhost:5000/api/vuelos/estatus");
-    if(response.ok) {
-      const arr = await response.json();
-      let estatus : Array<EstatusVuelo> = [];
 
-      arr.map((x: string) => estatus.push({Nombre: x}));
+    const listarEstatus = async () => {
+        const response = await fetch("http://localhost:5000/api/vuelos/estatus");
+        if(response.ok){
+            const arr = await response.json();
+            let estatus : Array<EstatusVuelo> = [];
+            arr.map((x: string) => estatus.push({Nombre: x}));
 
-     setListaEstatus(estatus);
+            setListaEstatus(estatus);
+        }
     }
-  }
-   const listarVuelos= async () => {
-    const response = await fetch("http://localhost:5000/api/vuelos/listar-vuelos");
-    if(response.ok) {
-      const arr = await response.json();
-      console.log(arr);
+
+    const listarVuelos = async () => {
+       let url =  "http://localhost:5000/api/vuelos/listar-vuelos";
+       let parametros : string[] = [];
+
+       if(estatus){
+        parametros.push("estatus=" + estatus);
+       }
+
+       if(origen){
+        parametros.push("origen=" + origen);
+       }
+
+       if(destino){
+        parametros.push("destino=" + destino);
+       }
+
+       if(fechaInicial){
+        parametros.push("fechaInicial=" + fechaInicial);
+       }
+
+       if(fechaFinal){
+        parametros.push("fechaFinal=" + fechaFinal);
+       }
+       
+       if(parametros.length > 0){
+        url += "?"
+        url += parametros.join("&");
+       }
+        const response = await fetch(url);
+        if(response.ok) {
+            const arr = await response.json();
+            setListaVuelos(arr);
+        } 
     }
-  }
-  useEffect(()=> {
-    listarCiudadesOrigen();
-    listarCiudadesDestino();
-    listarEstatus();
-  }, []);
 
+    useEffect(()=> {
+        listarCiudadesOrigen();
+        listarCiudadesDestino();
+        listarEstatus();
+    }, []);
+    return (
+        <>
+        <div className="h1">Buscador de Vuelos</div>
+        <div className="card mt-4">
+            <div className="card-header">Búsqueda de Vuelos</div>
+            <div className="card-body">
+                <div className="row">
+                    <div className="col-sm-6">
+                        <div className="mb-3">
+                            <label>Fecha Inicial</label>
+                            <input type= "date" className="form-control"
+                             value={fechaInicial} onChange={(e) => setFechaInicial(e.target.value)}/>
+                        </div>
+                    </div>
+                     
+                     <div className="col-sm-6">
+                        <div className="mb-3">
+                            <label>Fecha Final</label>
+                            <input type= "date" className="form-control"
+                               value={fechaFinal} onChange={(e) => setFechaFinal(e.target.value)}/>
+                        </div>
+                    </div>
 
-
-  return (
-    <> 
-    <div className="h1">Buscador de Vuelos</div>
-    <div className="car mt-4">
-      <div className="card-header">Busqueda de vuelos</div>
-      <div className="card-body">
-        <div className="row">
-          <div className="col-sm-6">
-            <div className="mb-3">
-              <label>Fecha Inicial</label>
-              <input type="date" className="form-control"/>
-            </div>
-          </div>
-           <div className="col-sm-6">
-            <div className="mb-3">
-              <label>Fecha Final</label>
-              <input type="date" className="form-control"/>
-            </div>
-          </div>
-          <div className="col-sm-4">
-            <div className="mb-3">
-               <label>Origen</label>
-               <select className="form-control">
-                <option value="">(Todos)</option>
-                {
-                   ciudadesOrigen.map(x => <option key={x.Nombre} value={x.Nombre}>{x.Nombre}</option>)
-                }
-               </select>
-            </div>
-          </div>
-            <div className="col-sm-4">
-            <div className="mb-3">
-               <label>Destino</label>
-               <select className="form-control">
-                 <option value="">(Todos)</option>
-                {
-                   ciudadesDestino.map(x => <option key={x.Nombre} value={x.Nombre}>{x.Nombre}</option>)
-                }
-               </select>
-            </div>
-          </div>
-           <div className="col-sm-4">
-            <div className="mb-3">
-               <label>Estatus</label>
-               <select className="form-control">
+                    <div className="col-sm-4">
+                        <div className="mb-3">
+                            <label>Origen</label>
+                            <select className="form-control" value={origen} onChange={(e)=> setOrigen(e.target.value)}>
                                 <option value="">(Todos)</option>
-                {
-                   ListaEstatus.map(x => <option key={x.Nombre} value={x.Nombre}>{x.Nombre}</option>)
-                }
-               </select>
+                                {
+                                    ciudadesOrigen?.map(x => <option key={x.Nombre} value={x.Nombre}>{x.Nombre}</option>)
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                     <div className="col-sm-4">
+                        <div className="mb-3">
+                            <label>Destino</label>
+                            <select className="form-control" value={destino} onChange={(e) => setDestino(e.target.value)}>
+                                 <option value="">(Todos)</option>
+                                {
+                                    ciudadesDestino?.map(x => <option key={x.Nombre} value={x.Nombre}>{x.Nombre}</option>)
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                     <div className="col-sm-4">
+                        <div className="mb-3">
+                            <label>Estatus</label>
+                            <select className="form-control" onChange={(e)=> setEstatus(e.target.value)} value={estatus}>
+                                 <option value="">(Todos)</option>
+                                {
+                                  listaEstatus?.map(x => <option key={x.Nombre} value={x.Nombre}>{x.Nombre}</option>)
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="col-12 d-flex justify-content-end">
+                        <button className="btn btn-primary" onClick={()=> {listarVuelos();}}>Buscar</button> 
+                    </div>
+                </div>
             </div>
-          </div>
-          <div className="col-12 d-flex justify-content-end">
-            <button className="btn btn-primary" onClick={()=> {listarVuelos();}}>Buscar</button>
-          </div>
         </div>
-      </div>
-   </div>
-   <div className="card-mt-4">
-    <div className="card header">Vuelos Encontrados</div>
-    <div className="card-body">
-      <ListadoVuelos/>
-    </div>
-   </div>
-    </>
-   )
+
+        <div className="card mt-4">
+            <div className="card-header">Vuelos Encontrados</div>
+            <div className="card-body">
+                <ListadoVuelos vuelos={listaVuelos} />
+            </div>
+        </div>
+        </>
+    )
 }
- 
+
 export default BuscadorVuelos;
